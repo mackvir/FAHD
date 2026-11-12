@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 export type UserRole = ' المسؤول الأعلى ' | ' المسؤول الأعلى ' | 'المدير' | 'المسير' | 'الزائر';
@@ -59,6 +62,24 @@ export interface ImportLog {
   uploadedBy: string;
   recordCount: number;
   active: boolean;
+}
+
+export interface ParsedSheetReport {
+  sheetName: string;
+  isPenal: boolean;
+  reason?: string;
+  year?: number;
+  periodType?: string;
+  month?: number | null;
+  movementsCount: number;
+}
+
+export interface IngestionReport {
+  totalSheets: number;
+  penalSheetsCount: number;
+  excludedSheetsCount: number;
+  totalMovements: number;
+  sheetReports: ParsedSheetReport[];
 }
 
 export interface KPIThreshold {

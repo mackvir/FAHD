@@ -1,6 +1,9 @@
 {
   "name": "منصة الإحصاء الزجري",
   "description": "منصة وطنية رقمية لتحليل وتصور الإحصاءات الزجرية لمحكمة الاستئناف بآسفي، وتحليل مؤشرات الأداء وتوقعات الذكاء الاصطناعي لتطوير العمل القضائي.",
+  "author": "Abdelmoghit CHLIH",
+  "contact": "AbdelmoghitCHLIH@gmail.com",
+  "copyright": "All rights reserved © Abdelmoghit CHLIH",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

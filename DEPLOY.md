@@ -1,3 +1,9 @@
+# منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+> **المطور الوحيد :** عبد المغيث شليح (Abdelmoghit CHLIH) — `AbdelmoghitCHLIH@gmail.com`  
+> **جميع الحقوق محفوظة © Abdelmoghit CHLIH**
+
+---
+
 # دليل النشر على Vercel + Supabase
 
 ## المتطلبات

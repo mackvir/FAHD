@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 import React, { useState, useMemo } from 'react';
@@ -82,7 +85,9 @@ interface ChamberDashboardProps {
 export default function ChamberDashboard({ movements }: ChamberDashboardProps) {
   // Get all chambers from active dataset
   const chambers = useMemo(() => {
-    return Array.from(new Set(movements.map(m => m.chamber))).sort();
+    return Array.from(new Set(movements.map(m => m.chamber)))
+      .filter(c => c && !/^\d+(\.\d+)?$/.test(c.trim()) && /[\u0600-\u06FF]/.test(c))
+      .sort();
   }, [movements]);
 
   // Extract unique years from the dataset
@@ -104,13 +109,13 @@ export default function ChamberDashboard({ movements }: ChamberDashboardProps) {
 
   // Initialize selected year and selected chamber once data is loaded
   React.useEffect(() => {
-    if (years.length > 0 && !selectedYear) {
+    if (years.length > 0 && (!selectedYear || !years.includes(selectedYear))) {
       setSelectedYear(years[years.length - 1]);
     }
   }, [years, selectedYear]);
 
   React.useEffect(() => {
-    if (chambers.length > 0 && !selectedChamber) {
+    if (chambers.length > 0 && (!selectedChamber || !chambers.includes(selectedChamber))) {
       setSelectedChamber(chambers[0]);
     }
   }, [chambers, selectedChamber]);

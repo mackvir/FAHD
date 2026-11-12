@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
@@ -110,7 +113,13 @@ export default function App() {
       case 'ai-hub':
         return <AIHub />;
       case 'upload':
-        return <UploadManager user={user} onUploadSuccess={() => { fetchMovements(); fetchSettings(); }} />;
+        return (
+          <UploadManager 
+            user={user} 
+            onUploadSuccess={() => { fetchMovements(); fetchSettings(); }} 
+            onNavigateToDashboard={() => setActiveTab('global')}
+          />
+        );
       case 'users':
         return <UsersManager user={user} />;
       case 'settings':

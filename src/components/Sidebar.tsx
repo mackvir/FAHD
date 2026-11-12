@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 import React from 'react';
@@ -112,9 +115,14 @@ export default function Sidebar({ activeTab, setActiveTab, user, onLogout, insti
           <LogOut className="h-3.5 w-3.5" />
           <span>خروج آمن من الجلسة</span>
         </button>
-        <span className="block text-[8px] text-slate-400 text-center mt-2.5 font-mono">
-          نظام S@J2 PENAL المطور · محكمة الاستئناف
-        </span>
+        <div className="mt-2.5 pt-2 border-t border-slate-200/60 text-center">
+          <span className="block text-[9px] font-bold text-slate-700">
+            تطوير: عبد المغيث شليح (Abdelmoghit CHLIH)
+          </span>
+          <span className="block text-[8px] text-slate-400 font-mono mt-0.5">
+            AbdelmoghitCHLIH@gmail.com
+          </span>
+        </div>
       </div>
     </aside>
   );

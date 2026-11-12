@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 import express from 'express';
@@ -10,6 +13,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import * as XLSX from 'xlsx';
 import dotenv from 'dotenv';
+import supabaseApiApp, { isSupabaseConfigured, parseCourtWorkbook } from './api/index';
 
 dotenv.config();
 
@@ -415,6 +419,14 @@ function saveDB() {
   fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
 }
 
+// Supabase or Local Mode Handler
+if (isSupabaseConfigured) {
+  console.log('[Judicial Platform Server] Connexion Supabase en ligne ACTIVEE.');
+  app.use(supabaseApiApp);
+} else {
+  console.log('[Judicial Platform Server] Mode local actif (server_db.json). Renseignez SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY dans .env pour la base en ligne.');
+}
+
 // REST endpoints
 // 1. JWT Authentication
 app.post('/api/auth/login', (req, res) => {
@@ -556,9 +568,9 @@ app.delete('/api/users/:id', (req, res) => {
   res.json({ success: true });
 });
 
-// 3. File Upload and Parse Excel File
+// 3. File Upload and Parse Excel File (Smart Anchor-based Ingestion Pipeline)
 app.post('/api/upload', (req, res) => {
-  const { filename, base64Data, uploadedBy } = req.body;
+  const { filename, base64Data, uploadedBy, preview } = req.body;
 
   if (!base64Data) {
     return res.status(400).json({ error: 'ملف البيانات فارغ أو غير صالح' });
@@ -567,198 +579,45 @@ app.post('/api/upload', (req, res) => {
   try {
     const buffer = Buffer.from(base64Data, 'base64');
     const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const parsedMovements: DBJudicialMovement[] = [];
-    let warningCount = 0;
+    const { parsedMovements: rawMovements, report } = parseCourtWorkbook(workbook);
 
-    // We need to parse every single sheet
-    workbook.SheetNames.forEach(sheetName => {
-      const sheet = workbook.Sheets[sheetName];
-      const items = XLSX.utils.sheet_to_json(sheet, { header: 'A', defval: '' }) as Record<string, any>[];
-
-      // Extremely robust parse of sheetName to extract year, periodType, and month
-      const cleanName = sheetName.trim();
-      let sheetYear = 2025;
-      let periodType: 'annual' | 'monthly' | 'cumulative' = 'monthly';
-      let month: number | null = null;
-      let periodLabel = sheetName;
-
-      // 1. Detect year: Look for any 4-digit number starting with 20 (e.g. 2020-2029) or 2-digit years
-      const year4Match = cleanName.match(/\b(202\d|201\d)\b/);
-      if (year4Match) {
-        sheetYear = parseInt(year4Match[1], 10);
-      } else {
-        // Look for 2-digit years in patterns: -23, -24, -25, or /23, /24, /25
-        const year2Match = cleanName.match(/[\-\/](2[3-9]|1[8-9])\b/);
-        if (year2Match) {
-          sheetYear = 2000 + parseInt(year2Match[1], 10);
-        } else if (/^(2[3-9]|1[8-9])$/.test(cleanName)) {
-          // Pure 2-digit sheetName
-          sheetYear = 2000 + parseInt(cleanName, 10);
-        }
-      }
-
-      // 2. Classify period type
-      const isAnnual = /^20\d{2}$/.test(cleanName) || cleanName.includes('سنوي') || cleanName.includes('عام') || cleanName.includes('annual') || cleanName.includes('حصيلة سنوية');
-      const isCumulative = cleanName.startsWith('1-') || cleanName.includes('تراكمي') || cleanName.includes('حصيلة تراكمية') || cleanName.includes('cumul');
-
-      if (isAnnual) {
-        periodType = 'annual';
-        periodLabel = `سنوي ${sheetYear}`;
-      } else if (isCumulative) {
-        periodType = 'cumulative';
-        // Extract month number (e.g. "1-10" or "تراكمي 10")
-        const monthMatch = cleanName.match(/-\s*(\d+)/) || cleanName.match(/تراكمي\s*(\d+)/) || cleanName.match(/\b(\d+)\b/);
-        if (monthMatch) {
-          const parsedM = parseInt(monthMatch[1], 10);
-          if (parsedM >= 1 && parsedM <= 12) {
-            month = parsedM;
-          }
-        }
-        if (!month) month = 10; // default to Oct
-        periodLabel = `تراكمي (${month} أشهر) ${sheetYear}`;
-      } else {
-        periodType = 'monthly';
-        // Extract month number
-        // Check for "05-24" or pure number
-        let parsedM: number | null = null;
-        const parts = cleanName.split(/[\-\/]/);
-        if (parts.length > 0) {
-          const firstNum = parseInt(parts[0].trim(), 10);
-          if (!isNaN(firstNum) && firstNum >= 1 && firstNum <= 12) {
-            parsedM = firstNum;
-          }
-        }
-        if (parsedM === null) {
-          const numMatch = cleanName.match(/\b(\d{1,2})\b/);
-          if (numMatch) {
-            const val = parseInt(numMatch[1], 10);
-            if (val >= 1 && val <= 12) {
-              parsedM = val;
-            }
-          }
-        }
-
-        if (parsedM !== null) {
-          month = parsedM;
-          const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'ماي', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
-          periodLabel = `${monthNames[month - 1]} ${sheetYear}`;
-        } else {
-          month = 10; // fallback
-          periodLabel = `شهري ${sheetYear}`;
-        }
-      }
-
-      // Map columns dynamically by scanning for keywords
-      let chamberIndex = 'B';
-      let typeIndex = 'C';
-      let codeIndex = 'D';
-      let backlogIndex = 'E';
-      let registeredIndex = 'F';
-      let progIndex = 'G';
-      let judgedIndex = 'H';
-      let remainingIndex = 'I';
-      let crIndex = 'J';
-      let dtIndex = 'K';
-
-      // Look at the first 15 rows to detect headers with robust list of variations
-      for (let r = 0; r < Math.min(items.length, 15); r++) {
-        const row = items[r];
-        const keys = Object.keys(row);
-        let foundHeader = false;
-        
-        keys.forEach(k => {
-          const val = String(row[k] || '').trim();
-          if (val.includes('الهيآت') || val.includes('الهيئات') || val.includes('الهيئة') || val.includes('الهيأة')) chamberIndex = k;
-          if (val.includes('نوعية القضايا') || val.includes('نوعية القضية') || val.includes('نوع القضية') || val.includes('نوع القضايا')) typeIndex = k;
-          if (val.includes('الرمز') || val.includes('رمز') || val.includes('الرموز') || val.includes('المعرف')) codeIndex = k;
-          if (val.includes('المخلف') || val.includes('مخلف') || val.includes('المتخلف')) backlogIndex = k;
-          if (val.includes('المسجل') || val.includes('مسجل') || val.includes('مسجلة') || val.includes('الجديد')) registeredIndex = k;
-          if (val.includes('الرائج') || val.includes('رائج') || val.includes('الرائجة')) progIndex = k;
-          if (val.includes('المحكوم') || val.includes('محكوم') || val.includes('المضموم') || val.includes('محكومة') || val.includes('القرارات السنوية')) judgedIndex = k;
-          if (val.includes('الباقي') || val.includes('باقي') || val.includes('المتبقي')) remainingIndex = k;
-          if (val.includes('CR')) crIndex = k;
-          if (val.includes('DT')) dtIndex = k;
-          
-          if (val.includes('الرمز') || val.includes('الهيئات') || val.includes('الهيآت') || val.includes('المخلف')) {
-            foundHeader = true;
-          }
-        });
-        if (foundHeader) break;
-      }
-
-      // Iterate rows and collect detailed data
-      items.forEach((row, rowIndex) => {
-        const codeVal = String(row[codeIndex] || '').trim();
-        const chamberName = String(row[chamberIndex] || '').trim();
-        const caseTypeName = String(row[typeIndex] || '').trim();
-
-        // Must be a valid detail row
-        // Starts with numeric code OR we have numeric values in backlog/registered/judged and a valid chamber name
-        const isNumericCode = /^\d+$/.test(codeVal);
-        const hasNumbers = !isNaN(parseInt(row[backlogIndex], 10)) || !isNaN(parseInt(row[registeredIndex], 10)) || !isNaN(parseInt(row[judgedIndex], 10));
-        
-        const isHeaderRow = chamberName === 'الهيئات' || chamberName === 'الهيآت' || chamberName === 'الهيئة' || chamberName === 'الهيأة' || chamberName.includes('نوعية القضايا') || chamberName.includes('الرمز');
-        const isTotalRow = chamberName.includes('المجموع') || chamberName.includes('المجموع الإجمالي') || caseTypeName.includes('المجموع') || codeVal.includes('المجموع');
-
-        if ((isNumericCode || hasNumbers) && chamberName && !isHeaderRow && !isTotalRow) {
-          const bl = parseInt(row[backlogIndex], 10) || 0;
-          const reg = parseInt(row[registeredIndex], 10) || 0;
-          const prog = parseInt(row[progIndex], 10) || (bl + reg);
-          const judgedVal = parseInt(row[judgedIndex], 10) || 0;
-          const rem = parseInt(row[remainingIndex], 10) || Math.max(0, prog - judgedVal);
-
-          // Safe division logic for CR% and DT
-          let cr: number | null = null;
-          let dt: number | null = null;
-
-          if (reg > 0) {
-            cr = Math.round((judgedVal / reg) * 100);
-          } else {
-            cr = (judgedVal === 0 && rem === 0 ? 100 : 0);
-          }
-
-          const periodDays = getDaysInPeriod(sheetYear, periodType, month);
-          if (judgedVal > 0) {
-            dt = Math.round((periodDays / judgedVal) * rem);
-          } else {
-            dt = null;
-          }
-
-          // Use parsed codeVal or create a fallback code mapped based on caseType or index
-          let finalCode = codeVal;
-          if (!isNumericCode || !finalCode) {
-            // lookup mapped code from DEFAULT_CASE_TYPES
-            const foundCodeEntry = Object.keys(DEFAULT_CASE_TYPES).find(key => DEFAULT_CASE_TYPES[key].label === caseTypeName);
-            finalCode = foundCodeEntry || `999${rowIndex}`;
-          }
-
-          parsedMovements.push({
-            id: `imported-${sheetName}-${rowIndex}-${finalCode}`,
-            chamber: chamberName,
-            caseType: caseTypeName || (DEFAULT_CASE_TYPES[finalCode]?.label || 'قضية زجرية'),
-            code: finalCode,
-            backlog: bl,
-            registered: reg,
-            inProgress: prog,
-            judged: judgedVal,
-            remaining: rem,
-            cr,
-            dt,
-            sheetName,
-            year: sheetYear,
-            periodType,
-            month,
-            periodLabel
-          });
-        }
+    if (rawMovements.length === 0) {
+      return res.status(400).json({
+        error: 'لم يتم العثور على أي بيانات زجرية صالحة في الملف المرفق. تأكد من أن الملف يحتوي على جداول الغرف الزجرية.',
+        report
       });
-    });
-
-    if (parsedMovements.length === 0) {
-      return res.status(400).json({ error: 'لم يتم العثور على أي بيانات قضائية صالحة في الملف المرفق.' });
     }
 
-    // Register active imported dataset
+    if (preview === true) {
+      return res.json({
+        success: true,
+        preview: true,
+        count: rawMovements.length,
+        report
+      });
+    }
+
+    // Remapper au format local camelCase DBJudicialMovement
+    const parsedMovements: DBJudicialMovement[] = rawMovements.map(m => ({
+      id: m.id,
+      chamber: m.chamber,
+      caseType: m.case_type,
+      code: m.code,
+      backlog: m.backlog,
+      registered: m.registered,
+      inProgress: m.in_progress,
+      judged: m.judged,
+      remaining: m.remaining,
+      cr: m.cr,
+      dt: m.dt,
+      sheetName: m.sheet_name,
+      year: m.year,
+      periodType: m.period_type,
+      month: m.month,
+      periodLabel: m.period_label
+    }));
+
+    // Écraser complètement les anciens mouvements locaux
     db.movements = parsedMovements;
     const logId = `import-${Date.now()}`;
     const newLog: DBImportHistory = {
@@ -770,18 +629,17 @@ app.post('/api/upload', (req, res) => {
       active: true
     };
 
-    // Mark previous as active: false
-    db.imports.forEach(i => i.active = false);
-    db.imports.unshift(newLog);
+    // Écraser tous les anciens fichiers d'import
+    db.imports = [newLog];
     saveDB();
 
     res.json({
       success: true,
+      preview: false,
       log: newLog,
-      warnings: warningCount,
-      count: parsedMovements.length
+      count: parsedMovements.length,
+      report
     });
-
   } catch (error: any) {
     console.error('Error parsing file:', error);
     res.status(500).json({ error: `حدث خطأ أثناء معالجة ملف الإكسل: ${error.message}` });

@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 import React, { useState, useMemo } from 'react';
@@ -88,7 +91,9 @@ export default function GlobalDashboard({ movements }: GlobalDashboardProps) {
   const years = useMemo(() => Array.from(new Set(movements.map(m => String(m.year)))).sort(), [movements]);
   
   const chambers = useMemo(() => {
-    return Array.from(new Set(movements.map(m => m.chamber))).sort();
+    return Array.from(new Set(movements.map(m => m.chamber)))
+      .filter(c => c && !/^\d+(\.\d+)?$/.test(c.trim()) && /[\u0600-\u06FF]/.test(c))
+      .sort();
   }, [movements]);
 
   // Filters State
@@ -106,10 +111,16 @@ export default function GlobalDashboard({ movements }: GlobalDashboardProps) {
 
   // Initialize selected year once data is loaded
   React.useEffect(() => {
-    if (years.length > 0 && !selectedYear) {
+    if (years.length > 0 && (!selectedYear || !years.includes(selectedYear))) {
       setSelectedYear(years[years.length - 1]);
     }
   }, [years, selectedYear]);
+
+  React.useEffect(() => {
+    if (selectedChamber !== 'all' && !chambers.includes(selectedChamber)) {
+      setSelectedChamber('all');
+    }
+  }, [chambers, selectedChamber]);
 
   // Auto-switch period type if selected period type does not exist in the active year's data
   React.useEffect(() => {

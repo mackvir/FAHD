@@ -1,7 +1,9 @@
 {
-  "name": "react-example",
+  "name": "plateforme-statistiques-judiciaires-safi",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "منصة الإحصاء الزجري - محكمة الاستئناف بآسفي - تطوير عبد المغيث شليح (Abdelmoghit CHLIH)",
+  "author": "Abdelmoghit CHLIH <AbdelmoghitCHLIH@gmail.com>",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",

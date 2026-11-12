@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 import React, { useState } from 'react';
@@ -147,6 +150,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 <span>المسير الإداري</span>
               </button>
             </div>
+          </div>
+
+          <div className="mt-8 pt-4 border-t border-slate-100 text-center">
+            <span className="block text-[11px] font-bold text-slate-700">
+              تصميم وتطوير: عبد المغيث شليح (Abdelmoghit CHLIH)
+            </span>
+            <span className="block text-[10px] text-slate-400 font-mono mt-0.5">
+              AbdelmoghitCHLIH@gmail.com · جميع الحقوق محفوظة ©
+            </span>
           </div>
         </div>
       </div>

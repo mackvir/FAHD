@@ -1,7 +1,10 @@
--- ============================================================
--- SCHÉMA SUPABASE — منصة الإحصاء الزجري
--- Exécuter une seule fois dans l'éditeur SQL Supabase
--- ============================================================
+-- ============================================================================
+-- منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+-- Judicial Penal Statistics Platform - Court of Appeal of Safi
+-- 
+-- Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+-- Tous droits réservés © Abdelmoghit CHLIH - Licence propriétaire stricte
+-- ============================================================================
 
 -- 1. TABLE UTILISATEURS
 CREATE TABLE IF NOT EXISTS users (

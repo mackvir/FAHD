@@ -1,6 +1,9 @@
 /**
- * @license
- * SPDX-License-Identifier: Apache-2.0
+ * ============================================================================
+ * منصة الإحصاء الزجري — محكمة الاستئناف بآسفي
+ * Développeur exclusif : Abdelmoghit CHLIH (AbdelmoghitCHLIH@gmail.com)
+ * Tous droits réservés © Abdelmoghit CHLIH - Code sous licence propriétaire stricte
+ * ============================================================================
  */
 
 import React, { useState, useEffect } from 'react';
@@ -593,6 +596,31 @@ export default function SettingsManager({ onSettingsUpdate, user }: SettingsProp
             </div>
           )}
 
+        </div>
+      </div>
+
+      {/* Developer & Intellectual Property Lock Card */}
+      <div className="bg-gradient-to-r from-slate-900 via-[#1a2b4b] to-slate-900 text-white p-6 rounded-2xl shadow-lg border border-slate-800">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4 text-center md:text-right">
+            <div className="h-12 w-12 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <ShieldAlert className="h-6 w-6 text-emerald-400" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                <span>تطوير وإشراف برمجي حصري: عبد المغيث شليح (Abdelmoghit CHLIH)</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30 font-mono">
+                  نظام محمي
+                </span>
+              </h4>
+              <p className="text-slate-400 text-xs mt-1">
+                جميع الحقوق الفكرية والبرمجية للمنصة محفوظة قانونياً للمطور · للتواصل الإداري: <span className="font-mono text-emerald-300">AbdelmoghitCHLIH@gmail.com</span>
+              </p>
+            </div>
+          </div>
+          <div className="text-center md:text-left text-[11px] text-slate-400 font-mono bg-white/5 px-4 py-2 rounded-xl border border-white/10 shrink-0">
+            <span>© Abdelmoghit CHLIH · All rights reserved</span>
+          </div>
         </div>
       </div>
 
